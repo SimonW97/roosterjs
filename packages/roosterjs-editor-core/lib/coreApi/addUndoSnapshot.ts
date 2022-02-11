@@ -7,6 +7,7 @@ import {
     NodePosition,
     PluginEventType,
     GetContentMode,
+    ColorTransformDirection,
 } from 'roosterjs-editor-types';
 
 /**
@@ -48,6 +49,16 @@ export const addUndoSnapshot: AddUndoSnapshot = (
                 range && Position.getStart(range).normalize(),
                 range && Position.getEnd(range).normalize()
             );
+
+            if (changeSource == ChangeSource.Format && core.lifecycle.isDarkMode) {
+                core.api.transformColor(
+                    core,
+                    core.contentDiv,
+                    true,
+                    null,
+                    ColorTransformDirection.LightToDark
+                );
+            }
 
             if (!isNested && !isShadowEdit) {
                 undoState.snapshotsService.addSnapshot(
