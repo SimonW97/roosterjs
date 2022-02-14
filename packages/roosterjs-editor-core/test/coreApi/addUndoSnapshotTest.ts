@@ -1,7 +1,12 @@
 import createEditorCore from './createMockEditorCore';
 import { addUndoSnapshot } from '../../lib/coreApi/addUndoSnapshot';
-import { PluginEventType, UndoSnapshotsService } from 'roosterjs-editor-types';
 import { Position } from 'roosterjs-editor-dom';
+import {
+    ChangeSource,
+    ColorTransformDirection,
+    PluginEventType,
+    UndoSnapshotsService,
+} from 'roosterjs-editor-types';
 
 describe('addUndoSnapshot', () => {
     let div: HTMLDivElement;
@@ -90,6 +95,31 @@ describe('addUndoSnapshot', () => {
                 data,
             },
             true
+        );
+    });
+
+    it('undo with callback and change format source', () => {
+        const triggerEvent = jasmine.createSpy();
+        const transformColor = jasmine.createSpy();
+        const core = createEditorCore(div, {
+            inDarkMode: true,
+            coreApiOverride: {
+                getSelectionRange: () => document.createRange(),
+                triggerEvent,
+                transformColor,
+            },
+        });
+        const data = {
+            value: 1,
+        };
+
+        addUndoSnapshot(core, () => data, ChangeSource.Format, false);
+        expect(transformColor).toHaveBeenCalledWith(
+            core,
+            core.contentDiv,
+            true,
+            null,
+            ColorTransformDirection.LightToDark
         );
     });
 
