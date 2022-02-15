@@ -87,6 +87,11 @@ function transformToDarkMode(element: HTMLElement, getDarkColor: (color: string)
     ColorAttributeName.forEach((names, index) => {
         const styleColor = element.style.getPropertyValue(names[ColorAttributeEnum.CssColor]);
         const attrColor = element.getAttribute(names[ColorAttributeEnum.HtmlColor]);
+        const styleDataSet = element.style.getPropertyValue(names[ColorAttributeEnum.CssDataSet]);
+        const attrDataSet = element.style.getPropertyValue(names[ColorAttributeEnum.HtmlDataSet]);
+        if (styleDataSet || attrDataSet) {
+            return;
+        }
 
         if (
             !element.dataset[names[ColorAttributeEnum.CssDataSet]] &&

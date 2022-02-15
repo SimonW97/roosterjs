@@ -54,7 +54,7 @@ export const addUndoSnapshot: AddUndoSnapshot = (
                 core.api.transformColor(
                     core,
                     core.contentDiv,
-                    true,
+                    false,
                     null,
                     ColorTransformDirection.LightToDark
                 );
