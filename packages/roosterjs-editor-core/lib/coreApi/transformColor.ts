@@ -59,56 +59,65 @@ export const transformColor: TransformColor = (
 };
 
 function transformToLightMode(element: HTMLElement) {
-    ColorAttributeName.forEach(names => {
-        // Reset color styles based on the content of the ogsc/ogsb data element.
-        // If those data properties are empty or do not exist, set them anyway to clear the content.
-        element.style.setProperty(
-            names[ColorAttributeEnum.CssColor],
-            getValueOrDefault(element.dataset[names[ColorAttributeEnum.CssDataSet]], '')
+    const textColor = ColorAttributeName[0];
+    const backgroundColor = ColorAttributeName[1];
+    if (
+        !element.dataset[textColor[ColorAttributeEnum.CssDataSet]] &&
+        !element.dataset[textColor[ColorAttributeEnum.HtmlDataSet]]
+    ) {
+        transformToLightModeOperation(
+            element,
+            textColor[ColorAttributeEnum.CssColor],
+            textColor[ColorAttributeEnum.CssDataSet],
+            textColor[ColorAttributeEnum.HtmlColor],
+            textColor[ColorAttributeEnum.HtmlDataSet]
         );
-        delete element.dataset[names[ColorAttributeEnum.CssDataSet]];
-
-        // Some elements might have set attribute colors. We need to reset these as well.
-        const value = element.dataset[names[ColorAttributeEnum.HtmlDataSet]];
-
-        if (getValueOrDefault(value, null)) {
-            element.setAttribute(names[ColorAttributeEnum.HtmlColor], value);
-        } else {
-            element.removeAttribute(names[ColorAttributeEnum.HtmlColor]);
-        }
-
-        delete element.dataset[names[ColorAttributeEnum.HtmlDataSet]];
-    });
+    }
+    if (
+        !element.dataset[backgroundColor[ColorAttributeEnum.CssDataSet]] &&
+        !element.dataset[backgroundColor[ColorAttributeEnum.HtmlDataSet]]
+    ) {
+        transformToLightModeOperation(
+            element,
+            backgroundColor[ColorAttributeEnum.CssColor],
+            backgroundColor[ColorAttributeEnum.CssDataSet],
+            backgroundColor[ColorAttributeEnum.HtmlColor],
+            backgroundColor[ColorAttributeEnum.HtmlDataSet]
+        );
+    }
 }
 
 function transformToDarkMode(element: HTMLElement, getDarkColor: (color: string) => string) {
-    const computedValues = getComputedStyles(element, ['color', 'background-color']);
-
-    ColorAttributeName.forEach((names, index) => {
-        const styleColor = element.style.getPropertyValue(names[ColorAttributeEnum.CssColor]);
-        const attrColor = element.getAttribute(names[ColorAttributeEnum.HtmlColor]);
-        const styleDataSet = element.style.getPropertyValue(names[ColorAttributeEnum.CssDataSet]);
-        const attrDataSet = element.style.getPropertyValue(names[ColorAttributeEnum.HtmlDataSet]);
-        if (styleDataSet || attrDataSet) {
-            return;
-        }
-
-        if (
-            !element.dataset[names[ColorAttributeEnum.CssDataSet]] &&
-            !element.dataset[names[ColorAttributeEnum.HtmlDataSet]] &&
-            (styleColor || attrColor) &&
-            styleColor != 'inherit' // For inherit style, no need to change it and let it keep inherit from parent element
-        ) {
-            const newColor = getDarkColor(computedValues[index] || styleColor || attrColor);
-            element.style.setProperty(names[ColorAttributeEnum.CssColor], newColor, 'important');
-            element.dataset[names[ColorAttributeEnum.CssDataSet]] = styleColor || '';
-
-            if (attrColor) {
-                element.setAttribute(names[ColorAttributeEnum.HtmlColor], newColor);
-                element.dataset[names[ColorAttributeEnum.HtmlDataSet]] = attrColor;
-            }
-        }
-    });
+    const textColor = ColorAttributeName[0];
+    const backgroundColor = ColorAttributeName[1];
+    if (
+        !element.dataset[textColor[ColorAttributeEnum.CssDataSet]] &&
+        !element.dataset[textColor[ColorAttributeEnum.HtmlDataSet]]
+    ) {
+        transformToLightDarkOperation(
+            element,
+            textColor[ColorAttributeEnum.CssColor],
+            textColor[ColorAttributeEnum.CssDataSet],
+            textColor[ColorAttributeEnum.HtmlColor],
+            textColor[ColorAttributeEnum.HtmlDataSet],
+            1,
+            getDarkColor
+        );
+    }
+    if (
+        !element.dataset[backgroundColor[ColorAttributeEnum.CssDataSet]] &&
+        !element.dataset[backgroundColor[ColorAttributeEnum.HtmlDataSet]]
+    ) {
+        transformToLightDarkOperation(
+            element,
+            backgroundColor[ColorAttributeEnum.CssColor],
+            backgroundColor[ColorAttributeEnum.CssDataSet],
+            backgroundColor[ColorAttributeEnum.HtmlColor],
+            backgroundColor[ColorAttributeEnum.HtmlDataSet],
+            0,
+            getDarkColor
+        );
+    }
 }
 
 function getValueOrDefault(value: string, defaultValue: string | null) {
@@ -130,4 +139,60 @@ function getAll(rootNode: Node, includeSelf: boolean): HTMLElement[] {
     }
 
     return result;
+}
+
+function transformToLightDarkOperation(
+    element: HTMLElement,
+    cssColor: string,
+    cssDataSet: string,
+    htmlColor: string,
+    htmlDataSet: string,
+    index: number,
+    getDarkColor: (color: string) => string
+) {
+    const computedValues = getComputedStyles(element, ['color', 'background-color']);
+
+    const styleColor = element.style.getPropertyValue(cssColor);
+    const attrColor = element.getAttribute(htmlColor);
+
+    if (
+        !element.dataset[cssDataSet] &&
+        !element.dataset[htmlDataSet] &&
+        (styleColor || attrColor) &&
+        styleColor != 'inherit' // For inherit style, no need to change it and let it keep inherit from parent element
+    ) {
+        const newColor = getDarkColor(computedValues[index] || styleColor || attrColor);
+        element.style.setProperty(cssColor, newColor, 'important');
+        element.dataset[cssDataSet] = styleColor || '';
+
+        if (attrColor) {
+            element.setAttribute(htmlColor, newColor);
+            element.dataset[htmlDataSet] = attrColor;
+        }
+    }
+}
+
+function transformToLightModeOperation(
+    element: HTMLElement,
+    cssColor: string,
+    cssDataSet: string,
+    htmlColor: string,
+    htmlDataSet: string
+) {
+    // Reset color styles based on the content of the ogsc/ogsb data element.
+    // If those data properties are empty or do not exist, set them anyway to clear the content.
+    element.style.setProperty(cssColor, getValueOrDefault(element.dataset[cssDataSet], ''));
+
+    delete element.dataset[cssDataSet];
+
+    // Some elements might have set attribute colors. We need to reset these as well.
+    const value = element.dataset[htmlDataSet];
+
+    if (getValueOrDefault(value, null)) {
+        element.setAttribute(htmlColor, value);
+    } else {
+        element.removeAttribute(htmlColor);
+    }
+
+    delete element.dataset[htmlDataSet];
 }
